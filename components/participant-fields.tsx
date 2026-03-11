@@ -20,8 +20,8 @@ export function ParticipantFields({
       <div className="field-legend">Models</div>
 
       <div className="participant-card">
-        <h3>Participant A</h3>
-        <p>Opens the debate and sets the first pressure point.</p>
+        <h3>Critic</h3>
+        <p>Opens the debate by clarifying the thesis and exposing fragility.</p>
         <div className="field">
           <label htmlFor="participant-a-model">Model</label>
           <input
@@ -29,14 +29,14 @@ export function ParticipantFields({
             className="input mono"
             value={participantAModel}
             onChange={(event) => onParticipantAModelChange(event.target.value)}
-            placeholder="openai/gpt-5.2"
+            placeholder="anthropic/claude-sonnet-4-6"
           />
         </div>
       </div>
 
       <div className="participant-card">
-        <h3>Participant B</h3>
-        <p>Responds directly to A and drives the counter-position.</p>
+        <h3>Builder</h3>
+        <p>Answers the critique with executable architecture and delivery priorities.</p>
         <div className="field">
           <label htmlFor="participant-b-model">Model</label>
           <input
@@ -44,7 +44,7 @@ export function ParticipantFields({
             className="input mono"
             value={participantBModel}
             onChange={(event) => onParticipantBModelChange(event.target.value)}
-            placeholder="anthropic/claude-sonnet-4-6"
+            placeholder="openai/gpt-5.2"
           />
         </div>
       </div>

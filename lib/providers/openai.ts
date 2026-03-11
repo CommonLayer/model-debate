@@ -79,19 +79,30 @@ function isGpt5Model(model: string): boolean {
   return /^gpt-5(?:$|[-.])/i.test(model);
 }
 
+function getOpenAIReasoningEffort(model: string): "low" | null {
+  if (!isGpt5Model(model)) {
+    return null;
+  }
+
+  // `low` is accepted by current GPT-5 variants, including gpt-5.2.
+  return "low";
+}
+
 function buildOpenAIRequestBody(
   input: ProviderGenerateTextInput,
   maxOutputTokens: number
 ): Record<string, unknown> {
+  const reasoningEffort = getOpenAIReasoningEffort(input.model);
+
   return {
     model: input.model,
     instructions: input.systemPrompt,
     input: input.userPrompt,
     max_output_tokens: maxOutputTokens,
-    ...(isGpt5Model(input.model)
+    ...(reasoningEffort
       ? {
           reasoning: {
-            effort: "minimal"
+            effort: reasoningEffort
           }
         }
       : {})

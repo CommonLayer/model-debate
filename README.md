@@ -1,29 +1,50 @@
 # Model Debate
 
-Model Debate is a public Next.js application for structured model-vs-model debates.
+Model Debate is a public Next.js workbench for structured model-vs-model debates.
 
-Version 1 is intentionally narrow: exactly two participants, a full alternating transcript, a final synthesis pass, and clean client-side export to Markdown or JSON.
+The debate behavior is role-based rather than provider-branded:
 
-## Overview
+- `critic` opens each round by clarifying the thesis, exposing conceptual debt, and demanding invariants
+- `builder` answers with executable architecture, delivery order, safeguards, and implementation priorities
+- both participants receive the full transcript so far at every turn
+- disagreement is explicit and encouraged; the system does not optimize for consensus
 
-- Exactly 2 participants: `A` and `B`
-- Strict alternating turns for each round
-- Final synthesis generated after the transcript completes
-- OpenRouter-first routing with a provider adapter abstraction
-- Direct OpenAI and Anthropic fallback from environment keys when OpenRouter is not configured
-- API key can come from the UI or the environment
-- UI key overrides the environment key for the current browser session only
-- Exports never include API keys
+The synthesis is format-based:
+
+- `Auto`
+- `Tech / Architecture`
+- `Decision / Strategy`
+- `Factual / Practical`
+- `Proof / Validation`
+
+The current product scope is intentionally narrow:
+
+- exactly 2 debate participants
+- strict alternating rounds
+- one final synthesis pass
+- transcript + Markdown/JSON export
+- optional document-backed evidence packs from uploads, a local repo, or GitHub
+
+## What v1.1 Adds
+
+Model Debate can now prepare a document evidence pack before the debate starts.
+
+- Upload local files directly in the UI
+- Import a local repo folder and select files from its tree
+- Load and browse public or private GitHub repositories
+- Resolve the selected files into a scored excerpt pack
+- Inject those excerpts into the debate and synthesis prompts
+- Require inline source markers like `[SRC-1]` when the models rely on the evidence pack
+
+If no sources are selected, the app behaves exactly like the original v1 flow.
 
 ## Product Scope
 
-This repository is intentionally focused.
-
 - One mode only: 2-model debate
 - No personas, presets, snapshots, or alternate run modes
-- No persistence layer
-- No local storage for secrets
-- No repository-specific context loaders
+- No database or long-term persistence
+- No `localStorage` for API keys or GitHub tokens
+- No repository-specific loaders outside the explicit source selectors
 
 ## Stack
 
@@ -31,22 +52,37 @@ This repository is intentionally focused.
 - TypeScript
 - React
 - Tailwind CSS
+- OpenRouter, OpenAI, Anthropic adapters
+- `unpdf` for PDF text extraction
 
 ## Architecture
 
 ```text
 app/
-  api/debate/route.ts        # local API entrypoint
-  api/models/route.ts        # provider-backed model discovery
-  page.tsx                   # server entrypoint
+  api/debate/route.ts
+  api/models/route.ts
+  api/sources/workspace/route.ts
+  api/sources/github/tree/route.ts
+  api/sources/resolve/route.ts
 components/
-  debate-workbench.tsx       # main workbench UI
+  debate-workbench.tsx
+  source-pack-preview.tsx
+  source-tree-browser.tsx
 lib/
-  providers/                 # provider adapters
-  server/debate-runner.ts    # transcript orchestration + synthesis
-  server/provider-resolution.ts
-  exports.ts                 # Markdown / JSON export helpers
-  types.ts                   # shared product types
+  exports.ts
+  prompts.ts
+  providers/
+  server/
+    debate-runner.ts
+    env.ts
+    provider-resolution.ts
+    source-common.ts
+    source-resolver.ts
+    source-tree.ts
+  types.ts
+scripts/
+  test-models.mjs
+  test-sources.mjs
 ```
 
 ## Getting Started
@@ -57,7 +93,7 @@ lib/
 npm install
 ```
 
-### 2. Create your local environment file
+### 2. Create a local env file
 
 ```bash
 cp .env.example .env.local
@@ -65,14 +101,16 @@ cp .env.example .env.local
 
 ### 3. Configure one of the supported auth paths
 
-Option A: OpenRouter
+Option A: OpenRouter-first
 
 ```dotenv
 OPENROUTER_API_KEY=your_openrouter_key
 OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
-DEFAULT_PARTICIPANT_A_MODEL=openai/gpt-5.2
-DEFAULT_PARTICIPANT_B_MODEL=anthropic/claude-sonnet-4-6
+GITHUB_TOKEN=
+LOCAL_REPO_BASE_DIR=
+DEFAULT_PARTICIPANT_A_MODEL=anthropic/claude-sonnet-4-6
+DEFAULT_PARTICIPANT_B_MODEL=openai/gpt-5.2
 DEFAULT_SYNTHESIS_MODEL=openai/gpt-5.2
 ```
 
@@ -82,12 +120,14 @@ Option B: Direct provider keys
 OPENROUTER_API_KEY=
 OPENAI_API_KEY=your_openai_key
 ANTHROPIC_API_KEY=your_anthropic_key
-DEFAULT_PARTICIPANT_A_MODEL=openai/gpt-5.2
-DEFAULT_PARTICIPANT_B_MODEL=anthropic/claude-sonnet-4-6
+GITHUB_TOKEN=
+LOCAL_REPO_BASE_DIR=
+DEFAULT_PARTICIPANT_A_MODEL=anthropic/claude-sonnet-4-6
+DEFAULT_PARTICIPANT_B_MODEL=openai/gpt-5.2
 DEFAULT_SYNTHESIS_MODEL=openai/gpt-5.2
 ```
 
-### 4. Start the development server
+### 4. Start the app
 
 ```bash
 npm run dev
@@ -102,22 +142,25 @@ Open [http://localhost:3000](http://localhost:3000).
 | `OPENROUTER_API_KEY` | No | Preferred single-key path for mixed-provider debates |
 | `OPENAI_API_KEY` | No | Used in direct mode for OpenAI models |
 | `ANTHROPIC_API_KEY` | No | Used in direct mode for Anthropic models |
-| `DEFAULT_PARTICIPANT_A_MODEL` | No | Default model shown for participant `A` |
-| `DEFAULT_PARTICIPANT_B_MODEL` | No | Default model shown for participant `B` |
-| `DEFAULT_SYNTHESIS_MODEL` | No | Default model used for the final synthesis |
+| `GITHUB_TOKEN` | No | Optional PAT for private GitHub trees and file loading |
+| `LOCAL_REPO_BASE_DIR` | No | Restricts which local repo paths the server will browse |
+| `DEFAULT_PARTICIPANT_A_MODEL` | No | Default critic model value |
+| `DEFAULT_PARTICIPANT_B_MODEL` | No | Default builder model value |
+| `DEFAULT_SYNTHESIS_MODEL` | No | Default synthesis model |
 
-Default fallbacks in code:
+Code fallbacks:
 
-- `participant A`: `openai/gpt-5.2`
-- `participant B`: `anthropic/claude-sonnet-4-6`
-- `synthesis`: `openai/gpt-5.2`
-- `rounds`: `2`
+- `Critic model`: `anthropic/claude-sonnet-4-6`
+- `Builder model`: `openai/gpt-5.2`
+- `Synthesis model`: `openai/gpt-5.2`
+- `Rounds`: `2`
+- `LOCAL_REPO_BASE_DIR`: two levels above the app repo root when not explicitly set
 
 ## Provider Resolution
 
-The app resolves credentials in this order:
+Credential resolution order:
 
-1. OpenRouter API key entered in the UI for the current session
+1. OpenRouter API key entered in the UI for the current browser session
 2. `OPENROUTER_API_KEY` from the environment
 3. Direct provider routing with `OPENAI_API_KEY` and `ANTHROPIC_API_KEY`
 
@@ -126,36 +169,85 @@ Direct routing is model-driven:
 - `openai/...` routes to OpenAI
 - `anthropic/...` routes to Anthropic
 
-This keeps OpenRouter as the default integration while still allowing teams to test with provider keys stored only in `.env.local`.
+GitHub token resolution order:
+
+1. GitHub token entered in the UI for the current browser session
+2. `GITHUB_TOKEN` from the environment
 
 ## Model Selection
 
-The model fields support both manual entry and a provider-backed dropdown.
+- `Critic model` and `Builder model` are role slots, not provider slots
+- both role slots can use any compatible model ID
+- `Synthesis model` can use either provider
+- Custom model IDs are still allowed
+- The suggestion menus are based on live provider catalogs, not a static hardcoded list
 
-- The UI loads a model catalog from the keys currently available to the server
-- If you paste an OpenRouter key in the UI, click `Refresh models` to reload the catalog for that session key
-- You can still enter a custom model ID even if it does not appear in the dropdown
-- The dropdown reflects what your current OpenRouter, OpenAI, and Anthropic credentials can list, not a hardcoded static menu
+## Source Resolution
+
+Supported inputs:
+
+- uploads
+- local repo files
+- GitHub repository files
+
+Supported file types in v1.1:
+
+- text
+- code
+- PDF text extraction
+
+Not supported:
+
+- DOCX
+- OCR
+- images
+- arbitrary local paths outside `LOCAL_REPO_BASE_DIR`
+
+Default limits:
+
+- maximum `20` selected files per run
+- maximum `3` excerpts per source
+- maximum `18` excerpts in the final pack
+- text/code files up to `2 MB`
+- PDF files up to `10 MB`
+
+Ignored paths:
+
+- `node_modules`
+- `.git`
+- `.next`
+- `dist`
+- `build`
+- `coverage`
+- env/key-like files
+- obvious minified assets
 
 ## Security Model
 
-- The UI API key is stored in React state only
-- The UI API key is never written to `localStorage`
-- Exported Markdown and JSON never include secrets
-- Server responses never echo API keys
+- OpenRouter, OpenAI, Anthropic, and GitHub tokens stay in React state or environment variables only
+- No secrets are stored in `localStorage`
+- Exports never include provider keys or GitHub tokens
+- Source packs contain only sanitized file metadata and resolved excerpts
 - The app is designed to avoid logging secrets
 
 ## Run Flow
 
-1. Configure the debate topic, objective, round count, and models
-2. Start the run from the local workbench
-3. The server orchestrates alternating turns between `A` and `B`
-4. The synthesis model generates a final working document from the transcript
-5. Export the result as Markdown or JSON
+1. Choose models, topic, objective, notes, and rounds
+2. Choose a synthesis format, or leave it on `Auto`
+3. Optionally select uploads, local repo files, and/or GitHub files
+4. Click `Prepare sources`
+5. Review the prepared evidence pack preview
+6. Run the debate
+7. Review transcript + synthesis
+8. Export Markdown or JSON
+
+If sources are selected, the app expects you to prepare them before the debate starts.
 
 ## API
 
 ### `POST /api/debate`
+
+Runs the debate and final synthesis.
 
 Request body:
 
@@ -163,83 +255,78 @@ Request body:
 {
   "topic": "Should early-stage teams prefer monoliths over microservices?",
   "objective": "Produce a concrete recommendation for an early-stage engineering team.",
+  "notes": "Pressure-test the invariants and the delivery sequence.",
+  "synthesisFormat": "decision_strategy",
   "rounds": 2,
-  "participantA": { "model": "openai/gpt-5.2" },
-  "participantB": { "model": "anthropic/claude-sonnet-4-6" },
-  "synthesisModel": "openai/gpt-5.2",
-  "apiKey": "optional_openrouter_key"
-}
-```
-
-Response shape:
-
-```json
-{
-  "transcript": [
-    {
-      "id": "round-1-A",
-      "round": 1,
-      "participant": "A",
-      "model": "openai/gpt-5.2",
-      "text": "..."
-    }
-  ],
-  "synthesis": {
-    "model": "openai/gpt-5.2",
-    "markdown": "..."
+  "participantA": {
+    "displayName": "Critic",
+    "modelId": "anthropic/claude-sonnet-4-6",
+    "rolePreset": "critic"
   },
-  "meta": {
-    "provider": "openrouter",
-    "providersUsed": ["openrouter"],
-    "generatedAt": "2026-03-11T10:00:00.000Z",
-    "rounds": 2,
-    "effectiveModels": {
-      "participantA": "openai/gpt-5.2",
-      "participantB": "anthropic/claude-sonnet-4-6",
-      "synthesis": "openai/gpt-5.2"
-    }
+  "participantB": {
+    "displayName": "Builder",
+    "modelId": "openai/gpt-5.2",
+    "rolePreset": "builder"
+  },
+  "synthesisModel": "openai/gpt-5.2",
+  "apiKey": "optional_openrouter_key",
+  "sourcePack": {
+    "files": [],
+    "excerpts": [],
+    "warnings": []
   }
 }
 ```
-
-Error classes:
-
-- `400` for invalid payloads or missing credentials
-- `502` for upstream provider failures
 
 ### `POST /api/models`
 
 Loads the model catalog for the current credential context.
 
+### `POST /api/sources/workspace`
+
+Loads the browseable file tree for a selected local repo path.
+
 Request body:
 
 ```json
 {
-  "apiKey": "optional_openrouter_key_from_ui"
+  "repoPath": "/path/to/your/repo"
 }
 ```
 
-Response shape:
+### `POST /api/sources/github/tree`
+
+Request body:
 
 ```json
 {
-  "mode": "direct",
-  "credentialSource": "direct",
-  "loadedFrom": ["openai", "anthropic"],
-  "models": [
-    {
-      "id": "openai/gpt-5.2",
-      "label": "openai/gpt-5.2",
-      "source": "recommended"
-    },
-    {
-      "id": "anthropic/claude-sonnet-4-6",
-      "label": "Claude Sonnet 4.6",
-      "source": "anthropic"
-    }
-  ],
-  "warnings": [],
-  "fetchedAt": "2026-03-11T10:00:00.000Z"
+  "repoUrl": "https://github.com/vercel/next.js",
+  "ref": "canary",
+  "githubToken": "optional_ui_token"
+}
+```
+
+### `POST /api/sources/resolve`
+
+Accepts `multipart/form-data` with:
+
+- `manifest`: JSON string
+- `githubToken`: optional string
+- `files`: zero or more uploaded files
+
+Example manifest:
+
+```json
+{
+  "topic": "Debate the strongest architecture direction",
+  "objective": "Produce a recommendation grounded in the selected documents.",
+  "localRepoPath": "/path/to/your/repo",
+  "workspacePaths": ["README.md", "app/page.tsx"],
+  "githubSelection": {
+    "repoUrl": "https://github.com/vercel/next.js",
+    "ref": "canary",
+    "paths": ["README.md"]
+  }
 }
 ```
 
@@ -249,53 +336,43 @@ Markdown export includes:
 
 - topic
 - objective
+- selected synthesis format
 - effective models
 - synthesis
-- full transcript
+- source manifest
+- prepared excerpts
+- source warnings
 
 JSON export includes:
 
 - versioned export payload
 - settings used for the run
+- sanitized source pack
+- full transcript in the result payload
 - debate result metadata
-- transcript and synthesis
 
-Neither export format includes API keys.
+## Smoke Tests
 
-## Development Commands
+Model catalog smoke test:
 
 ```bash
-npm run dev
-npm run lint
-npm run build
 npm run test:models
 ```
 
-`npm run test:models` checks the current keys in `.env.local` and prints the provider catalogs it can actually load.
+Source endpoint smoke test:
 
-## Contributing
+```bash
+npm run dev
+npm run test:sources
+```
 
-Contributions should preserve the current product boundary.
+Optional env overrides for the source smoke test:
 
-- Keep v1 scoped to exactly 2 participants
-- Do not introduce stored secrets, local storage key persistence, or secret-bearing exports
-- Prefer provider changes through the adapter layer instead of route-specific branching
-- Run `npm run lint` and `npm run build` before opening a pull request
-
-## Security
-
-- Never commit `.env.local`
-- Never place live credentials in `.env.example`
-- If a secret is ever committed, revoke it immediately and rotate it before any publication step
+- `APP_BASE_URL`
+- `TEST_LOCAL_REPO_PATH`
+- `TEST_GITHUB_REPO_URL`
+- `TEST_GITHUB_REF`
 
 ## License
 
 MIT. See [LICENSE](LICENSE).
-
-## Current Limits
-
-- Exactly 2 participants
-- Round count constrained to `1` through `5`
-- No multi-session persistence
-- No collaborative editing
-- No provider-specific advanced tuning UI

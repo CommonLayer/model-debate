@@ -17,7 +17,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test:models": "node scripts/test-models.mjs"
+    "test:models": "node scripts/test-models.mjs",
+    "test:sources": "node scripts/test-sources.mjs"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
@@ -26,7 +27,10 @@
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "tailwind-merge": "^3.5.0"
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "tailwind-merge": "^3.5.0",
+    "unpdf": "^1.4.0"
   },
   "devDependencies": {
     "@types/node": "^20",

@@ -1,4 +1,57 @@
-import type { DebateExport, DebateSettings, DebateTurn, DebateRunResult } from "@/lib/types";
+import type {
+  DebateExport,
+  DebateLanguage,
+  DebateSynthesisFormat,
+  DebateSettings,
+  DebateRunResult,
+  ResolvedExcerpt,
+  SourceFileRef,
+  SourcePack
+} from "@/lib/types";
+import { detectDebateLanguage } from "@/lib/prompts";
+
+function getSynthesisFormatLabel(
+  format: DebateSynthesisFormat,
+  language: DebateLanguage
+): string {
+  if (language === "fr") {
+    if (format === "tech_architecture") {
+      return "Technique / Architecture";
+    }
+
+    if (format === "decision_strategy") {
+      return "Decision / Strategie";
+    }
+
+    if (format === "factual_practical") {
+      return "Factuel / Pratique";
+    }
+
+    if (format === "proof_validation") {
+      return "Preuve / Validation";
+    }
+
+    return "Auto";
+  }
+
+  if (format === "tech_architecture") {
+    return "Tech / Architecture";
+  }
+
+  if (format === "decision_strategy") {
+    return "Decision / Strategy";
+  }
+
+  if (format === "factual_practical") {
+    return "Factual / Practical";
+  }
+
+  if (format === "proof_validation") {
+    return "Proof / Validation";
+  }
+
+  return "Auto";
+}
 
 function slugify(value: string): string {
   return value
@@ -10,50 +63,98 @@ function slugify(value: string): string {
     .slice(0, 48);
 }
 
-function renderTranscriptMarkdown(turns: DebateTurn[]): string {
-  return turns
-    .map((turn) => {
-      return [
-        `### Round ${turn.round} - Participant ${turn.participant}`,
-        "",
-        `- Model: ${turn.model}`,
-        "",
-        turn.text
-      ].join("\n");
-    })
-    .join("\n\n");
-}
-
 export function buildDebateExport(input: {
   settings: DebateSettings;
   result: DebateRunResult;
+  sourcePack?: SourcePack | null;
 }): DebateExport {
   return {
     version: 1,
     generatedAt: input.result.meta.generatedAt,
     settings: input.settings,
+    sourcePack: input.sourcePack || null,
     result: input.result
   };
 }
 
+function renderSourceFilesMarkdown(files: SourceFileRef[], language: DebateLanguage): string {
+  if (files.length === 0) {
+    return language === "fr" ? "_Aucun document prepare._" : "_No prepared documents._";
+  }
+
+  return files
+    .map((file) => {
+      const location =
+        file.origin === "github"
+          ? `${file.repoUrl || "GitHub"} @ ${file.ref || "default"} · ${file.path || file.label}`
+          : file.path || file.label;
+
+      return `- ${file.origin}: ${location}`;
+    })
+    .join("\n");
+}
+
+function renderExcerptMarkdown(excerpts: ResolvedExcerpt[], language: DebateLanguage): string {
+  if (excerpts.length === 0) {
+    return language === "fr" ? "_Aucun passage prepare._" : "_No prepared passages._";
+  }
+
+  return excerpts
+    .map((excerpt) =>
+      [
+        `### ${excerpt.id} ${excerpt.title}`,
+        "",
+        `- ${language === "fr" ? "Source" : "Source"}: ${excerpt.sourceId}`,
+        `- ${language === "fr" ? "Ancrage" : "Locator"}: ${excerpt.locator}`,
+        "",
+        excerpt.text
+      ].join("\n")
+    )
+    .join("\n\n");
+}
+
 export function buildDebateMarkdown(exportPayload: DebateExport): string {
+  const language = exportPayload.result.meta.language || detectDebateLanguage(exportPayload.settings);
+
   return [
-    "# Model Debate",
+    language === "fr" ? "# Debat de modeles" : "# Model Debate",
     "",
-    `- Generated at: ${exportPayload.generatedAt}`,
-    `- Topic: ${exportPayload.settings.topic}`,
-    `- Objective: ${exportPayload.settings.objective}`,
-    `- Participant A model: ${exportPayload.result.meta.effectiveModels.participantA}`,
-    `- Participant B model: ${exportPayload.result.meta.effectiveModels.participantB}`,
-    `- Synthesis model: ${exportPayload.result.meta.effectiveModels.synthesis}`,
+    `- ${language === "fr" ? "Genere le" : "Generated at"}: ${exportPayload.generatedAt}`,
+    `- ${language === "fr" ? "Sujet" : "Topic"}: ${exportPayload.settings.topic}`,
+    `- ${language === "fr" ? "Objectif" : "Objective"}: ${exportPayload.settings.objective}`,
+    ...(exportPayload.settings.notes.trim()
+      ? [`- ${language === "fr" ? "Notes" : "Notes"}: ${exportPayload.settings.notes.replace(/\s+/g, " ").trim()}`]
+      : []),
+    `- ${exportPayload.settings.participantA.displayName} ${language === "fr" ? "modele" : "model"}: ${exportPayload.result.meta.effectiveModels.participantA}`,
+    `- ${exportPayload.settings.participantB.displayName} ${language === "fr" ? "modele" : "model"}: ${exportPayload.result.meta.effectiveModels.participantB}`,
+    `- ${language === "fr" ? "Modele de synthese" : "Synthesis model"}: ${exportPayload.result.meta.effectiveModels.synthesis}`,
+    `- ${language === "fr" ? "Format de synthese" : "Synthesis format"}: ${getSynthesisFormatLabel(exportPayload.result.meta.synthesisFormat, language)}`,
+    ...(exportPayload.sourcePack
+      ? [
+          `- ${language === "fr" ? "Documents prepares" : "Prepared documents"}: ${exportPayload.sourcePack.files.length}`,
+          `- ${language === "fr" ? "Passages prepares" : "Prepared passages"}: ${exportPayload.sourcePack.excerpts.length}`
+        ]
+      : []),
     "",
-    "## Synthesis",
+    language === "fr" ? "## Synthese" : "## Synthesis",
     "",
     exportPayload.result.synthesis.markdown,
     "",
-    "## Transcript",
+    language === "fr" ? "## Documents selectionnes" : "## Selected documents",
     "",
-    renderTranscriptMarkdown(exportPayload.result.transcript)
+    renderSourceFilesMarkdown(exportPayload.sourcePack?.files || [], language),
+    "",
+    language === "fr" ? "## Passages selectionnes" : "## Selected passages",
+    "",
+    renderExcerptMarkdown(exportPayload.sourcePack?.excerpts || [], language),
+    ...(exportPayload.sourcePack?.warnings.length
+      ? [
+          "",
+          language === "fr" ? "## Avertissements documents" : "## Document warnings",
+          "",
+          ...exportPayload.sourcePack.warnings.map((warning) => `- ${warning}`)
+        ]
+      : [])
   ].join("\n");
 }
 

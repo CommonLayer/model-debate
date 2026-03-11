@@ -1,5 +1,7 @@
-const FALLBACK_PARTICIPANT_A_MODEL = "openai/gpt-5.2";
-const FALLBACK_PARTICIPANT_B_MODEL = "anthropic/claude-sonnet-4-6";
+import path from "node:path";
+
+const FALLBACK_PARTICIPANT_A_MODEL = "anthropic/claude-sonnet-4-6";
+const FALLBACK_PARTICIPANT_B_MODEL = "openai/gpt-5.2";
 const FALLBACK_SYNTHESIS_MODEL = "openai/gpt-5.2";
 const DEFAULT_ROUNDS = 2;
 
@@ -18,12 +20,18 @@ export function getServerDebateEnv(): {
   openrouterApiKey: string;
   openaiApiKey: string;
   anthropicApiKey: string;
+  githubToken: string;
+  localRepoBaseDir: string;
   defaults: PublicDebateDefaults;
 } {
   return {
     openrouterApiKey: readEnvString(process.env.OPENROUTER_API_KEY),
     openaiApiKey: readEnvString(process.env.OPENAI_API_KEY),
     anthropicApiKey: readEnvString(process.env.ANTHROPIC_API_KEY),
+    githubToken: readEnvString(process.env.GITHUB_TOKEN),
+    localRepoBaseDir: path.resolve(
+      readEnvString(process.env.LOCAL_REPO_BASE_DIR, path.resolve(process.cwd(), "..", ".."))
+    ),
     defaults: {
       participantAModel: readEnvString(
         process.env.DEFAULT_PARTICIPANT_A_MODEL,
