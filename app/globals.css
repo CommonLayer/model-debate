@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 222 23% 9%;
+    --foreground: 210 40% 98%;
+    --card: 222 20% 12%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 20% 12%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 221 15% 18%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 223 14% 16%;
+    --muted-foreground: 215 14% 70%;
+    --accent: 221 16% 20%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 63% 43%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 14% 22%;
+    --input: 220 14% 22%;
+    --ring: 214 90% 66%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 222 23% 9%;
+    --foreground: 210 40% 98%;
+    --card: 222 20% 12%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 20% 12%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 221 15% 18%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 223 14% 16%;
+    --muted-foreground: 215 14% 70%;
+    --accent: 221 16% 20%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 63% 43%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 14% 22%;
+    --input: 220 14% 22%;
+    --ring: 214 90% 66%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body {
+    @apply h-full bg-background text-foreground;
+  }
+
+  body {
+    @apply antialiased;
+    background-image:
+      radial-gradient(circle at 0% 0%, rgba(34, 83, 153, 0.25), transparent 32%),
+      radial-gradient(circle at 100% 0%, rgba(19, 56, 92, 0.3), transparent 30%);
+    background-attachment: fixed;
+  }
+}
+
+@layer utilities {
+  .scroll-soft {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  .scroll-soft::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .scroll-soft::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 999px;
+  }
+
+  .scroll-soft::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
