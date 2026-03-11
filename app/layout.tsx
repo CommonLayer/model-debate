@@ -17,7 +17,7 @@ const monoFont = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "Model Debate",
-  description: "Structured model-vs-model debate runs powered by OpenRouter."
+  description: "Source-grounded ADR and technical decision memos from local or private GitHub repos."
 };
 
 export default function RootLayout({

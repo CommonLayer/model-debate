@@ -246,7 +246,15 @@ function getTranscriptSpeakerLabel(modelId: string): string {
     return "Unknown model";
   }
 
-  return trimmed.includes("/") ? trimmed.split("/").slice(1).join("/") : trimmed;
+  return trimmed;
+}
+
+function getParticipantRoleLabel(participant: "A" | "B"): string {
+  return participant === "A" ? "Critic role" : "Builder role";
+}
+
+function getRolePresetLabel(rolePreset: "critic" | "builder"): string {
+  return rolePreset === "critic" ? "Critic role" : "Builder role";
 }
 
 function getSynthesisFormatLabel(format: DebateSynthesisFormat): string {
@@ -2042,15 +2050,15 @@ export function DebateWorkbench({ defaults }: DebateWorkbenchProps) {
                           <div className="mb-2 flex items-center justify-between gap-2">
                             <div className="min-w-0">
                               <div className="truncate text-sm font-medium text-foreground">
-                                {getTranscriptSpeakerLabel(completedTurn.model)}
+                                {completedTurn.model}
                               </div>
                               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <span>Round {completedTurn.round}</span>
                                 <span>•</span>
-                                <span>{completedTurn.model}</span>
+                                <span>{getRolePresetLabel(completedTurn.rolePreset)}</span>
                               </div>
                             </div>
-                            <Badge variant="outline">done</Badge>
+                            <Badge variant="outline">{getRolePresetLabel(completedTurn.rolePreset)}</Badge>
                           </div>
                           <p className="whitespace-pre-wrap text-sm leading-6">
                             {sanitizeTranscriptText(completedTurn.text)}
@@ -2067,24 +2075,20 @@ export function DebateWorkbench({ defaults }: DebateWorkbenchProps) {
                             ? "rounded-lg border border-sky-500/30 bg-sky-500/10 p-3"
                             : "rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3"
                         }
-                      >
+                        >
                         <div className="mb-2 flex items-center justify-between gap-2">
                           <div className="min-w-0">
                             <div className="truncate text-sm font-medium text-foreground">
-                              {speakerLabel}
+                              {step.model}
                             </div>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                               <span>Round {step.round}</span>
                               <span>•</span>
-                              <span>{step.model}</span>
+                              <span>{getParticipantRoleLabel(step.participant)}</span>
                             </div>
                           </div>
                           <Badge variant="outline">
-                            {state === "active"
-                              ? "thinking"
-                              : state === "queued"
-                                ? "queued"
-                                : "up next"}
+                            {state === "active" ? getParticipantRoleLabel(step.participant) : speakerLabel}
                           </Badge>
                         </div>
                         <div className="space-y-2">
@@ -2118,16 +2122,16 @@ export function DebateWorkbench({ defaults }: DebateWorkbenchProps) {
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <div className="min-w-0">
                         <div className="truncate text-sm font-medium text-foreground">
-                          {getTranscriptSpeakerLabel(turn.model)}
+                          {turn.model}
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span>Round {turn.round}</span>
                           <span>•</span>
-                          <span>{turn.model}</span>
+                          <span>{getRolePresetLabel(turn.rolePreset)}</span>
                         </div>
                       </div>
                       <Badge variant="outline">
-                        {getTranscriptSpeakerLabel(turn.model)}
+                        {getRolePresetLabel(turn.rolePreset)}
                       </Badge>
                     </div>
                     <p className="whitespace-pre-wrap text-sm leading-6">
@@ -2285,9 +2289,9 @@ export function DebateWorkbench({ defaults }: DebateWorkbenchProps) {
                   <div className="rounded-lg border border-border/80 bg-background/50 p-3 text-xs text-foreground">
                     <div className="font-medium">Models in scope</div>
                     <div className="mt-1 text-muted-foreground">
-                      {currentParticipants.participantA.displayName}: {currentModels.participantA}
+                      {currentModels.participantA} · {getRolePresetLabel(currentParticipants.participantA.rolePreset)}
                       <br />
-                      {currentParticipants.participantB.displayName}: {currentModels.participantB}
+                      {currentModels.participantB} · {getRolePresetLabel(currentParticipants.participantB.rolePreset)}
                       <br />
                       Synthesis: {currentModels.synthesis}
                       <br />

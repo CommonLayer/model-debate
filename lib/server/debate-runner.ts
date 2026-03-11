@@ -88,8 +88,8 @@ export async function runDebate(input: RunDebateInput): Promise<DebateRunResult>
       model: participantATarget.displayModel,
       message:
         language === "fr"
-          ? `${input.settings.participantA.displayName} ouvre le tour ${round}.`
-          : `${input.settings.participantA.displayName} is opening round ${round}.`
+          ? `${participantATarget.displayModel} ouvre le tour ${round}.`
+          : `${participantATarget.displayModel} is opening round ${round}.`
     });
 
     const aText = await participantATarget.adapter.generate({
@@ -130,8 +130,8 @@ export async function runDebate(input: RunDebateInput): Promise<DebateRunResult>
       turn: participantATurn,
       message:
         language === "fr"
-          ? `${input.settings.participantA.displayName} a termine le tour ${round}.`
-          : `${input.settings.participantA.displayName} completed round ${round}.`
+          ? `${participantATarget.displayModel} a termine le tour ${round}.`
+          : `${participantATarget.displayModel} completed round ${round}.`
     });
 
     input.onStatus?.({
@@ -143,8 +143,8 @@ export async function runDebate(input: RunDebateInput): Promise<DebateRunResult>
       model: participantBTarget.displayModel,
       message:
         language === "fr"
-          ? `${input.settings.participantB.displayName} repond au tour ${round}.`
-          : `${input.settings.participantB.displayName} is responding in round ${round}.`
+          ? `${participantBTarget.displayModel} repond au tour ${round}.`
+          : `${participantBTarget.displayModel} is responding in round ${round}.`
     });
 
     const bText = await participantBTarget.adapter.generate({
@@ -185,8 +185,8 @@ export async function runDebate(input: RunDebateInput): Promise<DebateRunResult>
       turn: participantBTurn,
       message:
         language === "fr"
-          ? `${input.settings.participantB.displayName} a termine le tour ${round}.`
-          : `${input.settings.participantB.displayName} completed round ${round}.`
+          ? `${participantBTarget.displayModel} a termine le tour ${round}.`
+          : `${participantBTarget.displayModel} completed round ${round}.`
     });
   }
 

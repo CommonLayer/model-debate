@@ -1,31 +1,75 @@
 # Model Debate
 
-Model Debate is a public Next.js workbench for structured model-vs-model debates.
+Model Debate is a source-grounded decision workbench for engineering teams.
 
-The debate behavior is role-based rather than provider-branded:
+The strongest use case is simple:
 
-- `critic` opens each round by clarifying the thesis, exposing conceptual debt, and demanding invariants
-- `builder` answers with executable architecture, delivery order, safeguards, and implementation priorities
+- select files from a local repo or a private GitHub repo
+- run a structured two-model debate on top of that evidence
+- export a shareable Markdown decision memo
+
+The product is best framed as:
+
+- ADR drafting from a private GitHub repo
+- architecture and design review preparation
+- source-backed technical recommendation writing
+
+It is not meant to be a generic chat UI or a fully autonomous coding agent.
+
+## Screenshots
+
+Overview of the workbench:
+
+![Model Debate overview](output/playwright/01-workbench-overview.png)
+
+Browsing a GitHub repository and selecting source files:
+
+![GitHub source browser](output/playwright/02-github-source-browser.png)
+
+Prepared evidence pack plus completed decision memo:
+
+![Completed run with prepared sources](output/playwright/04-completed-run.png)
+
+The screenshots use a public demo repository (`octocat/Hello-World`) so the flow is visible without exposing private code or tokens.
+
+## What It Does
+
+Model Debate runs one opinionated workflow:
+
+- a `critic` opens each round by pressure-testing the thesis, fragilities, and invariants
+- a `builder` answers with implementation choices, sequencing, and safeguards
 - both participants receive the full transcript so far at every turn
-- disagreement is explicit and encouraged; the system does not optimize for consensus
+- the final output is a structured synthesis, not a chat recap
+- selected source files can be resolved into excerpt packs and cited with `[SRC-x]` markers
 
-The synthesis is format-based:
+## Why This Exists
 
-- `Auto`
-- `Tech / Architecture`
-- `Decision / Strategy`
-- `Factual / Practical`
-- `Proof / Validation`
+Plain chat is easy, but technical decisions often need three things at once:
 
-The current product scope is intentionally narrow:
+- tension instead of premature consensus
+- explicit grounding in code or documents
+- an exportable memo that can be reused in a review, ADR, RFC, or handoff
+
+Model Debate is built around that narrower workflow rather than around open-ended conversation.
+
+## Current Scope
+
+The product scope is intentionally narrow:
 
 - exactly 2 debate participants
 - strict alternating rounds
 - one final synthesis pass
 - transcript + Markdown/JSON export
 - optional document-backed evidence packs from uploads, a local repo, or GitHub
+- format-based synthesis:
 
-## What v1.1 Adds
+  - `Auto`
+  - `Tech / Architecture`
+  - `Decision / Strategy`
+  - `Factual / Practical`
+  - `Proof / Validation`
+
+## Evidence Pack Support
 
 Model Debate can now prepare a document evidence pack before the debate starts.
 

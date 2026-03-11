@@ -1,7 +1,7 @@
 {
   "name": "model-debate",
   "version": "0.1.0",
-  "description": "Structured model-vs-model debate workbench built with Next.js.",
+  "description": "Source-grounded ADR and technical decision workbench for private GitHub repos.",
   "license": "MIT",
   "private": true,
   "keywords": [
