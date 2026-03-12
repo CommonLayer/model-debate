@@ -1,16 +1,16 @@
 # Model Debate
 
-Model Debate is a source-grounded decision workbench for engineering teams.
+Two AI models — a **Critic** and a **Builder** — debate your technical question, grounded in your own source code or documents, and produce a structured decision memo.
 
-The strongest use case is simple:
+The workflow is simple:
 
-- select files from a local repo or a private GitHub repo
-- run a structured two-model debate on top of that evidence
-- export a shareable Markdown decision memo
+1. Select files from local repos, uploads, PDFs, or a private GitHub repo
+2. Run a structured round-by-round debate between two models of your choice
+3. Export a shareable Markdown decision memo
 
-The product is best framed as:
+Typical use cases:
 
-- ADR drafting from a private GitHub repo
+- ADR drafting from any codebase or document set
 - architecture and design review preparation
 - source-backed technical recommendation writing
 
@@ -42,6 +42,18 @@ Model Debate runs one opinionated workflow:
 - the final output is a structured synthesis, not a chat recap
 - selected source files can be resolved into excerpt packs and cited with `[SRC-x]` markers
 
+## Example
+
+**Topic:** Should we migrate our REST API to GraphQL?
+
+**Critic (round 1):** The existing REST surface has 34 endpoints with inconsistent pagination contracts `[SRC-1]`. A GraphQL migration doesn't fix that — it just moves the inconsistency into resolver logic. The real risk is that client teams will over-fetch through nested queries before any rate-limiting layer is in place.
+
+**Builder (round 1):** The pagination inconsistency is real but scoped to 6 endpoints `[SRC-2]`. Those can be normalized as a pre-migration step. On over-fetching: depth limiting and query cost analysis are standard and can be added before any client goes to production. The migration unlocks typed schema sharing across three client teams that currently maintain hand-written API wrappers.
+
+**Synthesis:** Proceed with a scoped migration. Normalize the 6 inconsistent endpoints first. Gate production client access on query cost limits. Prioritize the two client teams already using codegen — they absorb the most wrapper maintenance cost today.
+
+---
+
 ## Why This Exists
 
 Plain chat is easy, but technical decisions often need three things at once:
@@ -50,7 +62,7 @@ Plain chat is easy, but technical decisions often need three things at once:
 - explicit grounding in code or documents
 - an exportable memo that can be reused in a review, ADR, RFC, or handoff
 
-Model Debate is built around that narrower workflow rather than around open-ended conversation.
+A single model asked the same question will produce a balanced answer. Two models in structured opposition will surface the fragilities first — and produce a more defensible recommendation as a result.
 
 ## Current Scope
 
