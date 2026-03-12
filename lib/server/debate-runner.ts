@@ -212,7 +212,7 @@ export async function runDebate(input: RunDebateInput): Promise<DebateRunResult>
       language,
       format: synthesisFormat
     }),
-    maxOutputTokens: 1600
+    maxOutputTokens: 2400
   });
   providersUsed.add(synthesisTarget.provider);
 

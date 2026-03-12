@@ -521,7 +521,8 @@ export function buildSynthesisSystemPrompt(language: DebateLanguage): string {
       "N'ecris jamais 'le critic dit', 'le builder repond', 'les deux s'accordent' ou une formule equivalente.",
       "Utilise le debat uniquement comme matiere premiere pour un document final autonome.",
       "Parle francais.",
-      "Pas de flatterie, pas de fiction, pas de phrases vagues."
+      "Pas de flatterie, pas de fiction, pas de phrases vagues.",
+      "Chaque section: 3 a 5 points maximum, phrases courtes. Sois exhaustif sur les points essentiels, pas sur les details."
     ].join("\n");
   }
 
@@ -534,7 +535,8 @@ export function buildSynthesisSystemPrompt(language: DebateLanguage): string {
     "Never write 'the critic says', 'the builder replies', 'both sides agree', or equivalent recap phrasing.",
     "Use the debate only as raw material for a standalone final document.",
     "Speak English, with the same directness as a severe French technical review.",
-    "No flattery, no fiction, no vague phrasing."
+    "No flattery, no fiction, no vague phrasing.",
+    "Each section: 3 to 5 points maximum, short sentences. Be exhaustive on key points, not on details."
   ].join("\n");
 }
 
